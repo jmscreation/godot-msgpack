@@ -15,7 +15,7 @@ func run(module):
         if encoded in case.msgpack:
             success_count += 1
         else:
-            print(" * Failed encode %s" % [case.name])
+            print(" * Failed encoding %s : %s ; reason: %s" % [case.name, type_string(typeof(case.value)), encoded_result.error_string])
             print("Input:")
             print("  %s" % [case.value])
             print("Expect one of:")
@@ -301,6 +301,16 @@ func pairs():
             ]
         },
 
+        # large float (Godot uses double for FLOAT type)
+        {
+            name = "float 273.456787172467",
+            value = 273.456787172467,
+            msgpack = [
+                PackedByteArray([0xca, 0x43, 0x88, 0xba, 0x78]),
+                PackedByteArray([0xcb, 0x40, 0x71, 0x17, 0x4f, 0x00, 0x10, 0xef, 0xa6]),
+            ]
+        },
+
         # string
         {
             name = "empty string",
@@ -439,6 +449,15 @@ func pairs():
         {
             name = "map {foo = 1, bar = 2}",
             value = {foo = 1, bar = 2},
+            msgpack = [
+                PackedByteArray([0x82, 0xa3, 0x66, 0x6f, 0x6f, 0x01, 0xa3, 0x62, 0x61, 0x72, 0x02]),
+                PackedByteArray([0xde, 0x00, 0x02, 0xa3, 0x66, 0x6f, 0x6f, 0x01, 0xa3, 0x62, 0x61, 0x72, 0x02]),
+                PackedByteArray([0xdf, 0x00, 0x00, 0x00, 0x02, 0xa3, 0x66, 0x6f, 0x6f, 0x01, 0xa3, 0x62, 0x61, 0x72, 0x02]),
+            ]
+        },
+        {
+            name = "map {\"foo\": 1, \"bar\": 2}",
+            value = {"foo": 1, "bar": 2},
             msgpack = [
                 PackedByteArray([0x82, 0xa3, 0x66, 0x6f, 0x6f, 0x01, 0xa3, 0x62, 0x61, 0x72, 0x02]),
                 PackedByteArray([0xde, 0x00, 0x02, 0xa3, 0x66, 0x6f, 0x6f, 0x01, 0xa3, 0x62, 0x61, 0x72, 0x02]),

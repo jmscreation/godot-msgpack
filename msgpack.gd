@@ -37,7 +37,18 @@
 #     encode function. The return value is similar to the one in the encode
 #     method
 
-static func encode(value):
+class_name Msgpack
+
+enum PrecisionPacking {
+	AUTO,
+	FLOAT,
+	DOUBLE
+}
+
+# This determines what floating point precision type is used to pack a Godot FLOAT type
+static var precision := PrecisionPacking.AUTO
+
+static func encode(value:Variant) -> Dictionary:
 	var ctx = {error = OK, error_string = ""}
 	var buffer = StreamPeerBuffer.new()
 	buffer.big_endian = true
@@ -72,7 +83,7 @@ static func decode(bytes) -> Dictionary:
 	else:
 		return {result = null, error = ctx.error, error_string = ctx.error_string}
 
-static func _encode(buf, value, ctx):
+static func _encode(buf:StreamPeerBuffer, value:Variant, ctx:Dictionary):
 	match typeof(value):
 		TYPE_NIL:
 			buf.put_u8(0xc0)
@@ -116,10 +127,23 @@ static func _encode(buf, value, ctx):
 					buf.put_64(value)
 
 		TYPE_FLOAT:
-			buf.put_u8(0xca)
-			buf.put_float(value)
+			var _single = true
+			match precision:
+				PrecisionPacking.FLOAT:
+					pass
+				PrecisionPacking.DOUBLE:
+					_single = false
+				PrecisionPacking.AUTO:
+					_single = step_decimals(value) < 7
 
-		TYPE_STRING:
+			if _single: # single precision point
+				buf.put_u8(0xca)
+				buf.put_float(value)
+			else: # double precision point
+				buf.put_u8(0xcb)
+				buf.put_double(value)
+
+		TYPE_STRING, TYPE_STRING_NAME:
 			var bytes = value.to_utf8_buffer()
 
 			var size = bytes.size()
@@ -305,7 +329,7 @@ static func _decode(buffer, ctx):
 		return buffer.get_float()
 	elif head == 0xcb:
 		# float64
-		if buffer.get_size() - buffer.get_position() < 4:
+		if buffer.get_size() - buffer.get_position() < 8:
 			ctx.error = FAILED
 			ctx.error_string = "not enough buffer for float64"
 			return null

@@ -9,9 +9,8 @@ static func to_hex(bytes):
     return s
 
 static func equals(a, b):
-    var epsilon = 0.001
-    if typeof(a) == TYPE_FLOAT or typeof(b) == TYPE_FLOAT:
-        return abs(a - b) <= epsilon
+    if typeof(a) == TYPE_FLOAT or typeof(b) == TYPE_FLOAT:        
+        return is_equal_approx(a,b)
     elif typeof(a) == TYPE_DICTIONARY and typeof(b) == TYPE_DICTIONARY:
         return a.hash() == b.hash()
     else:
